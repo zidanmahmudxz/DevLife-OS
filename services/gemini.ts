@@ -1,13 +1,16 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Fixed: Initialize using the correct named parameter as per Gemini API guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!apiKey) {
+  console.error("Missing VITE_GEMINI_API_KEY environment variable.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 export const generateProjectRoadmap = async (projectName: string, description: string) => {
   try {
     const response = await ai.models.generateContent({
-      // Fixed: Using gemini-3-pro-preview for complex architectural and reasoning tasks
       model: 'gemini-3-pro-preview',
       contents: `As a senior technical architect, create a structured project roadmap for: "${projectName}". 
       Description: ${description}. 
@@ -30,7 +33,7 @@ export const generateProjectRoadmap = async (projectName: string, description: s
         }
       }
     });
-    // Fixed: response.text is a property, not a method
+
     return response.text ? JSON.parse(response.text) : null;
   } catch (error) {
     console.error("Gemini Error:", error);
@@ -45,9 +48,9 @@ export const getFinancialAdvice = async (income: number, expenses: number) => {
       contents: `I am a freelance developer in Bangladesh. This month I earned ৳${income} and spent ৳${expenses}. 
       Give me 3 short, punchy pieces of advice for my financial health in the context of the local economy.`,
     });
-    // Fixed: response.text is a property, not a method
-    return response.text || "আপনার খরচ নিয়ন্ত্রণ করুন এবং সেভিংস বাড়ানোতে মনোযোগ দিন!";
+
+    return response.text || "আপনার খরচ নিয়ন্ত্রণ করুন এবং সেভিংস বাড়ান।";
   } catch (error) {
-    return "আপনার খরচ নিয়ন্ত্রণ করুন এবং সেভিংস বাড়ানোতে মনোযোগ দিন!";
+    return "আপনার খরচ নিয়ন্ত্রণ করুন এবং সেভিংস বাড়ান।";
   }
 };
