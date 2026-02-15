@@ -1,11 +1,10 @@
-
 import { supabase } from './supabase';
 import { db } from './db';
 import { AppState } from '../types';
 
 /**
- * Background Synchronization Service.
- * Implements full bi-directional sync with Supabase.
+ * Background Synchronization Service
+ * Full bi-directional sync with Supabase (RLS safe)
  */
 
 class SyncService {
@@ -14,22 +13,29 @@ class SyncService {
   async syncAll() {
     if (this.isSyncing) return;
     this.isSyncing = true;
+
     console.debug('🔄 Sync Sequence Initiated...');
 
     try {
-      const auth = supabase.auth as any;
-      const { data: { user } } = await auth.getUser();
-      if (!user) {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error || !data?.user) {
         console.debug('⚠️ Sync Aborted: User not authenticated');
-        this.isSyncing = false;
         return;
       }
 
-      const collections: (keyof AppState)[] = ['projects', 'finances', 'tasks', 'vault'];
+      const userId = data.user.id;
+
+      const collections: (keyof AppState)[] = [
+        'projects',
+        'finances',
+        'tasks',
+        'vault'
+      ];
 
       for (const collection of collections) {
-        await this.pushPending(collection, user.id);
-        await this.pullUpdates(collection, user.id);
+        await this.pushPending(collection, userId);
+        await this.pullUpdates(collection, userId);
       }
 
       console.debug('✅ Sync Success: All collections updated.');
@@ -40,36 +46,61 @@ class SyncService {
     }
   }
 
+  /**
+   * PUSH LOCAL → SUPABASE
+   */
   private async pushPending(collection: keyof AppState, userId: string) {
+    if (!userId) {
+      console.error("❌ Push aborted: No user ID");
+      return;
+    }
+
     const rawData = db.getRawData();
-    const pending = rawData[collection].filter(i => i.sync_status === 'pending');
+    const pending = rawData[collection].filter(
+      (i: any) => i.sync_status === 'pending'
+    );
 
     if (pending.length === 0) return;
 
-    // Clean payload: strip local-only UI fields before pushing to Supabase
-    const payload = pending.map(item => {
-      const { sync_status, ...rest } = item as any;
-      return { ...rest, user_id: userId };
+    const payload = pending.map((item: any) => {
+      const { sync_status, ...rest } = item;
+
+      return {
+        ...rest,
+        user_id: userId, // 🔥 enforce correct user
+        updated_at: new Date().toISOString()
+      };
     });
 
     const { error } = await supabase
       .from(collection)
       .upsert(payload, { onConflict: 'id' });
 
-    if (!error) {
-      pending.forEach(item => db.markSynced(collection, item.id));
-    } else {
+    if (error) {
       console.error(`⬆️ Push Error (${collection}):`, error);
+      return;
     }
+
+    pending.forEach((item: any) =>
+      db.markSynced(collection, item.id)
+    );
+
+    console.debug(`⬆️ ${collection}: ${pending.length} items pushed`);
   }
 
+  /**
+   * PULL SUPABASE → LOCAL
+   */
   private async pullUpdates(collection: keyof AppState, userId: string) {
+    if (!userId) return;
+
     const rawData = db.getRawData();
-    
-    // Find the latest updated_at in local DB to query only newer items
-    const lastSync = rawData[collection].reduce((acc, curr) => {
-      return (curr.updated_at > acc) ? curr.updated_at : acc;
-    }, '1970-01-01T00:00:00Z');
+
+    const lastSync = rawData[collection].reduce(
+      (acc: string, curr: any) =>
+        curr.updated_at > acc ? curr.updated_at : acc,
+      '1970-01-01T00:00:00Z'
+    );
 
     const { data, error } = await supabase
       .from(collection)
@@ -82,26 +113,30 @@ class SyncService {
       return;
     }
 
-    if (data && data.length > 0) {
-      console.debug(`⬇️ Pulled ${data.length} updates for ${collection}`);
-      for (const item of data) {
-        // Upsert to local db and mark as synced to prevent infinite loops
-        await db.upsert(collection, item, true);
-      }
+    if (!data || data.length === 0) return;
+
+    console.debug(`⬇️ Pulled ${data.length} updates for ${collection}`);
+
+    for (const item of data) {
+      await db.upsert(collection, item, true);
     }
   }
 
+  /**
+   * INIT BACKGROUND SYNC
+   */
   init() {
     this.syncAll();
 
-    // Trigger on reconnection
     window.addEventListener('online', () => {
       console.debug('🌐 Connection Restored: Syncing...');
       this.syncAll();
     });
 
-    // Background heart-beat (every 2 minutes)
-    setInterval(() => this.syncAll(), 120000);
+    // every 2 minutes
+    setInterval(() => {
+      this.syncAll();
+    }, 120000);
   }
 }
 
