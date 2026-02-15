@@ -1,0 +1,8 @@
+{
+  "name": "DevLife OS",
+  "description": "A comprehensive operating system for developers to manage projects, finances, tasks, and sensitive API keys with local encryption and AI-powered insights.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
