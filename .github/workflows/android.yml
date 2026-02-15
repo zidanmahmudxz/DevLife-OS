@@ -22,6 +22,9 @@ jobs:
 
       - run: npm install @capacitor/core @capacitor/cli @capacitor/android
 
+      # 🔥 এখানে android add করলাম
+      - run: npx cap add android
+
       - run: npx cap sync android
 
       - uses: actions/setup-java@v3
