@@ -20,20 +20,21 @@ jobs:
 
       - run: npm run build
 
-      - run: npm install @capacitor/android
+      - run: npm install @capacitor/core @capacitor/cli @capacitor/android
 
       - run: npx cap sync android
 
       - uses: actions/setup-java@v3
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 17
 
       - run: |
           cd android
-          ./gradlew assembleDebug
+          chmod +x gradlew
+          ./gradlew assembleRelease
 
       - uses: actions/upload-artifact@v4
         with:
-          name: DevLife-OS-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
