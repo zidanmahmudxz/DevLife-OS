@@ -188,7 +188,24 @@ export const FinanceTracker: React.FC<FinanceTrackerProps> = ({ finances }) => {
                         {entry.client_name}
                         {entry.sync_status === 'pending' && <div className="w-1.5 h-1.5 bg-amber-500 rounded-full" title="Sync Pending"></div>}
                       </div>
-                      {entry.type === 'loan' && <button onClick={() => { setForm({ client: entry.client_name, amount: '', type: 'repayment', date: new Date().toISOString().split('T')[0] }); setIsAdding(true); }} className="mt-1 block text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all">REPAY LOAN</button>}
+                      <div className="flex gap-2 mt-1">
+                        {entry.type === 'loan' && (
+                          <button 
+                            onClick={() => { setForm({ client: entry.client_name, amount: '', type: 'repayment', date: new Date().toISOString().split('T')[0] }); setIsAdding(true); }} 
+                            className="text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all font-black uppercase tracking-tighter"
+                          >
+                            REPAY LOAN
+                          </button>
+                        )}
+                        {entry.type === 'business_delivery' && (
+                          <button 
+                            onClick={() => { setForm({ client: entry.client_name, amount: '', type: 'business_payment', date: new Date().toISOString().split('T')[0] }); setIsAdding(true); }} 
+                            className="text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all font-black uppercase tracking-tighter"
+                          >
+                            COLLECT MONEY
+                          </button>
+                        )}
+                      </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tighter border ${getTypeStyles(entry.type)}`}>
