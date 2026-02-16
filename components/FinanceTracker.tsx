@@ -168,45 +168,47 @@ export const FinanceTracker: React.FC<FinanceTrackerProps> = ({ finances }) => {
             </h3>
             <span className="text-[10px] font-black text-slate-600">DevLife OS Money DB</span>
         </div>
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-slate-950/50 border-b border-white/5">
-            <tr>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Client/Source</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Type</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Value</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-white/5">
-            {filteredFinances.map(entry => (
-              <tr key={entry.id} className="hover:bg-white/[0.02] transition-colors group">
-                <td className="px-6 py-4 text-xs text-slate-400 font-bold tracking-tighter">{entry.date}</td>
-                <td className="px-6 py-4 text-sm font-bold text-slate-200">
-                    <div className="flex items-center gap-2">
-                      {entry.client_name}
-                      {entry.sync_status === 'pending' && <div className="w-1.5 h-1.5 bg-amber-500 rounded-full" title="Sync Pending"></div>}
-                    </div>
-                    {entry.type === 'loan' && <button onClick={() => { setForm({ client: entry.client_name, amount: '', type: 'repayment', date: new Date().toISOString().split('T')[0] }); setIsAdding(true); }} className="mt-1 block text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all">REPAY LOAN</button>}
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tighter border ${getTypeStyles(entry.type)}`}>
-                    {entry.type.replace('_', ' ')}
-                  </span>
-                </td>
-                <td className={`px-6 py-4 text-sm font-black text-right ${getValueColor(entry.type)}`}>
-                  {getSign(entry.type)}৳{entry.amount.toLocaleString()}
-                </td>
-                <td className="px-6 py-4 text-center">
-                    <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleEdit(entry)} className="p-1.5 hover:bg-white/5 rounded-lg text-blue-400">✏️</button>
-                        <button onClick={() => handleDelete(entry.id)} className="p-1.5 hover:bg-rose-500/10 rounded-lg text-rose-500">🗑️</button>
-                    </div>
-                </td>
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse min-w-[700px]">
+            <thead className="bg-slate-950/50 border-b border-white/5">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Date</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Client/Source</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Type</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Value</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-white/5">
+              {filteredFinances.map(entry => (
+                <tr key={entry.id} className="hover:bg-white/[0.02] transition-colors group">
+                  <td className="px-6 py-4 text-xs text-slate-400 font-bold tracking-tighter">{entry.date}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-slate-200">
+                      <div className="flex items-center gap-2">
+                        {entry.client_name}
+                        {entry.sync_status === 'pending' && <div className="w-1.5 h-1.5 bg-amber-500 rounded-full" title="Sync Pending"></div>}
+                      </div>
+                      {entry.type === 'loan' && <button onClick={() => { setForm({ client: entry.client_name, amount: '', type: 'repayment', date: new Date().toISOString().split('T')[0] }); setIsAdding(true); }} className="mt-1 block text-[9px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded border border-blue-500/20 hover:bg-blue-500 hover:text-white transition-all">REPAY LOAN</button>}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-tighter border ${getTypeStyles(entry.type)}`}>
+                      {entry.type.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className={`px-6 py-4 text-sm font-black text-right ${getValueColor(entry.type)}`}>
+                    {getSign(entry.type)}৳{entry.amount.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                      <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => handleEdit(entry)} className="p-1.5 hover:bg-white/5 rounded-lg text-blue-400">✏️</button>
+                          <button onClick={() => handleDelete(entry.id)} className="p-1.5 hover:bg-rose-500/10 rounded-lg text-rose-500">🗑️</button>
+                      </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {filteredFinances.length === 0 && <div className="p-20 text-center text-slate-600 font-bold uppercase tracking-widest italic">No records match the current filter.</div>}
       </div>
     </div>
