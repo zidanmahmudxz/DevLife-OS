@@ -58,17 +58,23 @@ export const FinanceTracker: React.FC<FinanceTrackerProps> = ({ finances }) => {
   const stats = useMemo(() => {
     const calc = (type: FinanceType) => finances.filter(f => f.type === type).reduce((acc, curr) => acc + curr.amount, 0);
     
+    // logic based on user request:
+    // Total Income & Profit only from 'income' and 'expense'
     const income = calc('income');
     const expense = calc('expense');
-    const loans = calc('loan');
-    const repaid = calc('repayment');
+    
+    // Business balance: Delivery (+) vs Payment (-)
     const delivered = calc('business_delivery');
     const received = calc('business_payment');
+    
+    // Loan balance: Loan (+) vs Repayment (-)
+    const loans = calc('loan');
+    const repaid = calc('repayment');
 
     return {
-      revenue: income + received,
+      revenue: income, // Business payments don't mix with direct income anymore
       expenses: expense,
-      profit: (income + received) - expense,
+      profit: income - expense, // Profit is purely based on general income vs expense
       loanBalance: loans - repaid,
       receivables: delivered - received
     };
@@ -144,9 +150,9 @@ export const FinanceTracker: React.FC<FinanceTrackerProps> = ({ finances }) => {
                     <option value="income">General Income</option>
                     <option value="expense">General Expense</option>
                     <option value="business_delivery">Work Delivered (Invoice)</option>
-                    <option value="business_payment">Payment Received</option>
+                    <option value="business_payment">Payment Received (Collect)</option>
                     <option value="loan">Borrow Money (Loan)</option>
-                    <option value="repayment">Pay Back Loan</option>
+                    <option value="repayment">Pay Back Loan (Repay)</option>
                 </select>
             </div>
             <div className="space-y-2">
@@ -246,13 +252,16 @@ const getTypeStyles = (type: FinanceType) => {
 
 const getValueColor = (type: FinanceType) => {
     switch(type) {
-        case 'income': case 'business_payment': case 'loan': return 'text-emerald-400';
-        case 'expense': case 'repayment': case 'business_delivery': return 'text-rose-400';
+        case 'income': case 'loan': case 'business_delivery': return 'text-emerald-400';
+        case 'expense': case 'repayment': case 'business_payment': return 'text-rose-400';
     }
 }
 
 const getSign = (type: FinanceType) => {
-    return (type === 'income' || type === 'business_payment' || type === 'loan') ? '+' : '-';
+    // income adds to cash, loan adds to liability balance, delivery adds to receivable balance
+    if (type === 'income' || type === 'loan' || type === 'business_delivery') return '+';
+    // expense removes cash, repayment removes liability, payment removes receivable
+    return '-';
 }
 
 const StatCard = ({ title, value, color, icon, subtitle, active, onClick }: { title: string, value: string, color: string, icon: string, subtitle?: string, active?: boolean, onClick: () => void }) => (
