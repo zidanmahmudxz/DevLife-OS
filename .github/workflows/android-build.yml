@@ -11,13 +11,15 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Setup Node
+      - name: Setup Node 22 LTS
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: 'npm'
+          node-version: '22.x'
+
+      - name: Check Node Version
+        run: node -v
 
       - name: Install Dependencies
         run: npm install
@@ -25,15 +27,22 @@ jobs:
       - name: Build Web App
         run: npm run build
 
-      - name: Install Capacitor Android
-        run: npm install @capacitor/android
+      - name: Add Android Platform
+        run: npx cap add android || echo "Android already added"
 
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Build APK
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug
 
       - name: Upload APK
